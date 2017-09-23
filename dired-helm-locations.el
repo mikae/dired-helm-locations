@@ -31,6 +31,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;; Code:
+(require 'dired)
+(require 'helm)
+
 (defconst dired-helm-locations-version "0.1"
   "Version of dired-helm-locations.")
 
@@ -38,13 +41,15 @@
   "This variable is alist.
 ((string-name . (elisp-code-to-get-locations))).")
 
-(defvar dired-helm-locations-source
-  `((name . "Open location in dired")
-    (candidates . ,(mapcar 'car dired-helm-locations--alist))
-    (action . (lambda (candidate)
-                (let ((--path (eval (cdr (assoc candidate dired-helm-locations--alist)))))
-                  (dired --path))
-                ))))
+(defconst dired-helm-locations--source
+  `((name       . "Open location in Dired")
+    (candidates . dired-helm-locations-get-candidates)
+    (action     . (lambda (candidate)
+                    (let* ((--assoc (assoc candidate dired-helm-locations--alist))
+                           (--path (eval (cdr --assoc))))
+                      (if (file-accessible-directory-p --path)
+                          (dired --path)
+                        (error "Incorrect path of name %s: %s" candidate --path)))))))
 
 (defmacro dired-helm-locations-add (location-name location)
   "Add new (LOCATION-NAME . LOCATION) pair."
@@ -66,11 +71,7 @@
 (defun dired-helm-locations-open ()
   "Select location from helm buffer, and open it in dired buffer."
   (interactive)
-  (helm :sources `((name       . "Open location in Dired")
-                   (candidates . dired-helm-locations-get-candidates)
-                   (action     . (lambda (candidate)
-                                   (let ((--path (eval (cdr (assoc candidate dired-helm-locations--alist)))))
-                                     (dired --path)))))))
+  (helm :sources '(dired-helm-locations--source)))
 
 (provide 'dired-helm-locations)
 ;;; dired-helm-locations.el.el ends here
