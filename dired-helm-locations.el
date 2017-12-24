@@ -33,6 +33,7 @@
 ;;; Code:
 (require 'dired)
 (require 'helm)
+(require 'cl-lib)
 
 (defconst dired-helm-locations-version "0.1"
   "Version of dired-helm-locations.")
@@ -51,10 +52,17 @@
                           (dired --path)
                         (error "Incorrect path of name %s: %s" candidate --path)))))))
 
-(defmacro dired-helm-locations-add (location-name location)
-  "Add new (LOCATION-NAME . LOCATION) pair."
-  `(setq dired-helm-locations--alist
-         (cons '(,location-name . ,location) dired-helm-locations--alist)))
+(defmacro dired-helm-locations-add (&rest args)
+  "Add pairs from ARGS. ARGS must have even length."
+  (let ((--length (length args)))
+    (if (and (not (zerop --length))
+             (eq (% --length 2) 0))
+        `(cl-loop for --name in ',args       by #'cddr
+                  for --path in (cdr ',args) by #'cddr
+                  do
+                  (setq dired-helm-locations--alist
+                        (cons (cons --name --path)
+                              dired-helm-locations--alist))))))
 
 (defun dired-helm-locations-get-all ()
   "Get location alist."

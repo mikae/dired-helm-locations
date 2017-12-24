@@ -51,7 +51,15 @@
             :to-be 0)
     (dired-helm-locations-add "temp" (car '("/tmp" "/tmp")))
     (expect (length (dired-helm-locations-get-all))
-            :to-be 1)))
+            :to-be 1))
+
+  (it "Can add several locations at once"
+    (expect (length (dired-helm-locations-get-all))
+            :to-be 0)
+    (dired-helm-locations-add "temp1" (car '("/tmp" "/tmp"))
+                              "temp2" (cadr '("/tmp" "/tmp")))
+    (expect (length (dired-helm-locations-get-all))
+            :to-be 2)))
 
 (describe "dired-helm-locations-get-candidates"
   (before-each
